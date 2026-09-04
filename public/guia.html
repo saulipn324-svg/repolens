@@ -1,0 +1,79 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RepoLens · Documentación</title><style>body{font:16px/1.75 system-ui,sans-serif;background:#10151e;color:#dbe5f2;max-width:880px;margin:auto;padding:40px 24px}h1,h2,h3{line-height:1.25;letter-spacing:-.025em;color:#eff3f8}h1{font-size:34px;margin-top:40px}h2{margin-top:35px}a{color:#c8f36b}pre{background:#1c293a;border:1px solid #34465b;padding:18px;border-radius:10px;overflow:auto}code{font-size:14px}hr{border:0;border-top:1px solid #34465b;margin:50px 0}li{margin:5px 0}</style></head><body><a href="/">← Abrir RepoLens</a><h1>RepoLens · GitHub en perspectiva</h1>
+<p>Tercer proyecto del portafolio de <strong>Saul Ramos Sanchez</strong>. Dashboard para explorar repositorios públicos, lenguajes, estrellas y eventos recientes de una cuenta de GitHub.</p>
+<h2>Qué puedes hacer</h2>
+<ul>
+<li>Buscar usuarios u organizaciones por su nombre de GitHub.</li>
+<li>Filtrar repositorios por nombre, descripción y lenguaje; incluir o excluir forks y archivados.</li>
+<li>Ordenar por estrellas, forks, nombre o fecha del último push.</li>
+<li>Consultar distribución por lenguaje principal, top 5 por estrellas y eventos de los últimos 14 días UTC.</li>
+<li>Abrir los repositorios originales en GitHub.</li>
+</ul>
+<h2>Stack y arquitectura</h2>
+<p>React 19, TypeScript, Tailwind CSS 4, Recharts y componentes Shadcn sobre Vinext. El navegador consulta directamente la API REST pública de GitHub, sin token. El sitio se entrega como una aplicación compatible con Sites/Cloudflare Workers; no utiliza Java ni base de datos.</p>
+<p><code>lib/github.ts</code> contiene el cliente HTTP, validación, normalización, caché temporal y funciones de análisis. <code>app/page.tsx</code> coordina las consultas cancelables y la interfaz. La información recibida se representa como texto y los enlaces se construyen sobre el dominio fijo <code>github.com</code>.</p>
+<h2>Ejecutar en Windows</h2>
+<p>Requisitos: Node.js 24 y npm.</p>
+<pre><code class="language-powershell">cd repolens
+npm ci
+npm run dev -- --port 3006
+</code></pre>
+<p>Abrir <a href="http://localhost:3006">http://localhost:3006</a>. También puedes ejecutar <code>scripts/Iniciar-RepoLens.ps1</code> desde PowerShell. No requiere Docker, claves de API ni contraseñas.</p>
+<h2 id="validacion">Validación</h2>
+<pre><code class="language-powershell">npm run typecheck
+npm test
+npm run build
+</code></pre>
+<p>Las 15 pruebas automatizadas cubren normalización, filtros, agregaciones, caché, paginación, respuestas parciales, errores y cancelación. Se comprobó además una consulta real de <code>octocat</code> a la API pública. Las pruebas unitarias utilizan respuestas controladas y no consumen la cuota de GitHub. CI ejecuta instalación reproducible, tipos, pruebas y compilación.</p>
+<h2>Alcance de los datos</h2>
+<p>Se cargan hasta 500 repositorios propios públicos ordenados por último push (cinco páginas de 100). Una consulta completa realiza entre 3 y 7 peticiones: perfil, repositorios y una página de eventos. Las métricas de repositorios respetan los filtros y corresponden exclusivamente a los registros cargados.</p>
+<p>La distribución cuenta repositorios por lenguaje principal, no bytes ni líneas de código. La actividad usa como máximo 100 eventos públicos recientes y los agrupa en 14 días UTC; no es una medición de productividad ni un historial completo de commits. Las estrellas tampoco miden calidad del código.</p>
+<p>GitHub limita las consultas sin autenticación por IP. El dashboard muestra los encabezados de cuota cuando están disponibles y comunica cuándo esperar. La caché conserva hasta ocho consultas durante cinco minutos <strong>en memoria de la pestaña</strong>. Recargar la página elimina esa caché; no hay almacenamiento persistente ni exportación de datos.</p>
+<p>Los repositorios privados de tu cuenta (incluidos proyectos del portafolio guardados como privados) no aparecerán. Para probar inmediatamente, usa el botón de ejemplo <code>octocat</code>.</p>
+<h2>Documentación</h2>
+<ul>
+<li><a href="#guia">Manual y decisiones técnicas</a></li>
+<li><a href="#validacion">Casos de prueba</a></li>
+<li><a href="/guia.html">Guía HTML</a></li>
+</ul>
+<p>Incluye una integración opcional WebMCP para consultar una cuenta desde agentes compatibles. La búsqueda visible funciona sin esa API experimental. Se verificaron el registro de la herramienta, el rechazo de una entrada inválida y la búsqueda de octocat con actualización del dashboard mediante un navegador compatible.</p>
+<h2>Fuentes oficiales</h2>
+<ul>
+<li><a href="https://docs.github.com/en/rest/repos/repos#list-repositories-for-a-user">Repositorios públicos de un usuario</a></li>
+<li><a href="https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api">Límites de la API REST</a></li>
+<li><a href="https://docs.github.com/en/rest/activity/events#list-public-events-for-a-user">Eventos públicos</a></li>
+</ul>
+<p>Proyecto independiente de portafolio; no es un producto oficial de GitHub.</p>
+<hr><section id="guia"><h1>Guía de RepoLens</h1>
+<h2>Primer uso</h2>
+<ol>
+<li>Escribe el nombre de una cuenta, por ejemplo <code>octocat</code>, y pulsa Explorar.</li>
+<li>Revisa el perfil y la fecha de la consulta para confirmar qué cuenta estás viendo.</li>
+<li>Filtra por lenguaje, texto, forks o archivos. Las tarjetas y las gráficas de repositorios se recalculan sobre esa selección.</li>
+<li>Ordena la lista y pulsa Mostrar 20 más para revelar más registros ya descargados.</li>
+<li>Revisa la actividad pública. Esta sección pertenece a la cuenta completa y no cambia con los filtros de repositorios.</li>
+</ol>
+<p>Puedes buscar otra cuenta durante una consulta: la solicitud anterior se cancela y sus resultados no reemplazan los nuevos. El botón Cancelar consulta vuelve al estado inicial. Los filtros no hacen nuevas peticiones a GitHub.</p>
+<h2>Interpretar las gráficas</h2>
+<p><strong>Lenguajes:</strong> una unidad equivale a un repositorio. Los registros sin lenguaje detectable se etiquetan como Sin lenguaje. Cuando hay más de seis categorías, se muestran las cinco principales y se agrupa el resto; la tabla conserva los lenguajes individuales.</p>
+<p><strong>Estrellas:</strong> top 5 de los repositorios filtrados. El conteo representa estrellas recibidas por esos repositorios, no estrellas que el usuario ha dado a otros proyectos.</p>
+<p><strong>Actividad:</strong> número de eventos públicos por día UTC en una ventana de 14 días, tomada de una página de hasta 100 eventos. Los eventos pueden representar pushes, incidencias, estrellas, pull requests u otras acciones. Un evento no equivale a un commit y una ausencia de eventos no prueba inactividad.</p>
+<p><strong>Último push:</strong> fecha pública reportada para el repositorio; no equivale necesariamente a actividad personal del dueño.</p>
+<h2>Errores y datos parciales</h2>
+<ul>
+<li>Nombre inválido: se rechaza localmente antes de consultar GitHub.</li>
+<li>404: la cuenta pública no se encontró.</li>
+<li>403 o 429: GitHub restringió las consultas; se muestra el momento de recuperación cuando lo indica la API.</li>
+<li>Tiempo de espera o desconexión: se informa del fallo y se permite reintentar manualmente. Cada petición tiene un límite de 12 segundos.</li>
+<li>Error a partir de la segunda página: se conservan los repositorios ya cargados con un aviso de muestra incompleta.</li>
+<li>Error de eventos: se conservan perfil y repositorios y se marca la actividad como no disponible, sin convertirla en cero ficticio.</li>
+</ul>
+<p>No hay reintentos automáticos ni solicitudes en segundo plano. La cuenta y los filtros se mantienen únicamente mientras la página está abierta.</p>
+<h2>Decisiones técnicas</h2>
+<p>El acceso directo desde el navegador evita almacenar tokens y aprovecha el soporte CORS de GitHub. Las peticiones usan <code>credentials: omit</code>; no leen repositorios privados ni la sesión de GitHub abierta en otras pestañas. El backend del hosting entrega la aplicación, pero no actúa como proxy de la API.</p>
+<p>La paginación está acotada a cinco páginas para controlar latencia y consumo. No se sigue ciegamente una URL recibida en un encabezado: las rutas se construyen con un usuario validado y un número de página local. Los repositorios se deduplican por ID.</p>
+<p><code>AbortController</code> cancela solicitudes previas y un identificador de secuencia protege contra respuestas fuera de orden. La caché en memoria reduce consultas repetidas sin presentar datos almacenados como información en tiempo real.</p>
+<p>La interfaz permite teclado, utiliza etiquetas en los controles y ofrece una tabla textual de repositorios. Las gráficas tienen soporte de accesibilidad de Recharts, leyendas con cantidades y descripciones de alcance.</p>
+<h2>Cómo presentarlo en una entrevista</h2>
+<p>“Desarrollé un dashboard en React y TypeScript conectado a una API externa. Separé la obtención y normalización de datos de los componentes visuales, incorporé paginación limitada, caché temporal y cancelación de solicitudes. Las pruebas cubren respuestas parciales y errores de cuota, además de filtros y agregaciones.”</p>
+<p>Muestra una búsqueda, un filtro combinado y una gráfica; explica por qué los eventos públicos no equivalen a productividad. No presentes como implementados un backend Java, autenticación o una base de datos: están fuera del alcance de esta versión.</p>
+</section></body></html>
