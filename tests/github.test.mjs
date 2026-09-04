@@ -9,7 +9,7 @@ import {
   loadDashboard,
   clearCache,
   GitHubError,
-} from '../lib/github.ts';
+} from '../entities/github/index.ts';
 const raw = (id, name, extra = {}) => ({
   id,
   name,

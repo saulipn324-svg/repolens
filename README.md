@@ -63,3 +63,7 @@ Incluye una integración opcional WebMCP para consultar una cuenta desde agentes
 - [Eventos públicos](https://docs.github.com/en/rest/activity/events#list-public-events-for-a-user)
 
 Proyecto independiente de portafolio; no es un producto oficial de GitHub.
+
+## Organización del código
+
+Consulta [la arquitectura y sus decisiones](docs/ARQUITECTURA.md).
